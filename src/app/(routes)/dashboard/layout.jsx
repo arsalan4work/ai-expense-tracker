@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect} from 'react'
+import { useEffect } from 'react';
 import SideNav from './_components/SideNav';
 import DashboardHeader from './_components/DashboardHeader';
 import { db } from '../../../../utils/dbConfig';
@@ -9,32 +9,47 @@ import { ClerkProvider, useUser } from '@clerk/nextjs';
 import { eq } from 'drizzle-orm';
 import { useRouter } from 'next/navigation';
 
-function DashboardLayout({children}) {
-    const {user} = useUser();
-    const router = useRouter();
-    useEffect(() => {
-        user && checkUserBudgets()
-    }, [user]);
+function DashboardLayout({ children }) {
+  const { user } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
     const checkUserBudgets = async () => {
-        const results = await db.select.from(Budgets).where(eq(Budgets.createdBy, user?.primaryEmailAddress.emailAddress))
-        if(result?.length === 0){
-            router.replace('/dashboard/budgets')
+      if (!user?.primaryEmailAddress?.emailAddress) return;
+
+      try {
+        const results = await db
+          .select()
+          .from(Budgets)
+          .where(eq(Budgets.createdBy, user.primaryEmailAddress.emailAddress));
+
+        if (!results || results.length === 0) {
+          router.replace('/dashboard/budgets');
         }
+      } catch (error) {
+        console.error('Error checking budgets:', error);
+      }
+    };
+
+    if (user) {
+      checkUserBudgets();
     }
-    return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-        <div>
-            {/* Side NavBar */}
-            <div className='fixed md:w-64 hidden md:block'>
-                <SideNav/>
-            </div>
-            <div className='md:ml-64'>
-                <DashboardHeader/>
-                {children}
-            </div>
-        </div>
+  }, [user, router]);
+
+  return (
+    <ClerkProvider>
+    <div>
+      {/* Side NavBar */}
+      <div className="fixed md:w-64 hidden md:block">
+        <SideNav />
+      </div>
+      <div className="md:ml-64">
+        <DashboardHeader />
+        {children}
+      </div>
+    </div>
     </ClerkProvider>
-    )
+  );
 }
 
 export default DashboardLayout;

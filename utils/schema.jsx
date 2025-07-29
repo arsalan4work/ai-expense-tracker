@@ -1,4 +1,5 @@
-import { integer, numeric, pgTable, serial, varchar } from "drizzle-orm/pg-core";
+import { integer, numeric, pgTable, serial, varchar, timestamp } from "drizzle-orm/pg-core";
+
 
 // Budget Schema
 export const Budgets = pgTable('budget', {
@@ -20,9 +21,10 @@ export const Incomes = pgTable('incomes', {
 
 // Expenses Schema
 export const Expenses = pgTable('expenses', {
-    id: serial('id').primaryKey(), 
+    id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
-    amount: numeric("amount").notNull().default(0),
-    BudgetId : integer('budgetId').references(() => Budgets.id),
-    createdBy: varchar('createdBy').notNull()
-})
+    amount: numeric('amount').notNull().default("0"),
+    budgetId: integer('budgetId').references(() => Budgets.id), // make sure this is lowercase and consistent
+    createdBy: varchar('createdBy').notNull(),
+    createdAt: timestamp('createdAt').defaultNow(), // ✅ add this to match the insert
+  });
