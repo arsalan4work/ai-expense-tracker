@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { UserButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import FeedbackForm from './FeedbackForm';
 
 export default function Header() {
   const { user, isSignedIn } = useUser();
@@ -41,6 +42,7 @@ export default function Header() {
         >
           Dashboard
         </Button>
+        
 
         {isSignedIn ? (
           <UserButton />
@@ -51,6 +53,7 @@ export default function Header() {
             </Button>
           </Link>
         )}
+        <div><FeedbackForm/></div>
       </div>
     </div>
   );
