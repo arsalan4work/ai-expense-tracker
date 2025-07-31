@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import CardInfo from "./_components/CardInfo";
@@ -15,17 +16,29 @@ function Dashboard() {
   const [budgetList, setBudgetList] = useState([]);
   const [incomeList, setIncomeList] = useState([]);
   const [expensesList, setExpensesList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    user && getBudgetList();
+    if (user) {
+      fetchDashboardData();
+    }
   }, [user]);
-  /**
-   * used to get budget List
-   */
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([getBudgetList(), getIncomeList(), getAllExpenses()]);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getBudgetList = async () => {
     const result = await db
       .select({
         ...getTableColumns(Budgets),
-
         totalSpend: sql`sum(${Expenses.amount})`.mapWith(Number),
         totalItem: sql`count(${Expenses.id})`.mapWith(Number),
       })
@@ -35,34 +48,19 @@ function Dashboard() {
       .groupBy(Budgets.id)
       .orderBy(desc(Budgets.id));
     setBudgetList(result);
-    getAllExpenses();
-    getIncomeList();
   };
 
-  /**
-   * Get Income stream list
-   */
   const getIncomeList = async () => {
-    try {
-      const result = await db
-        .select({
-          ...getTableColumns(Incomes),
-          totalAmount: sql`SUM(CAST(${Incomes.amount} AS NUMERIC))`.mapWith(
-            Number
-          ),
-        })
-        .from(Incomes)
-        .groupBy(Incomes.id); // Assuming you want to group by ID or any other relevant column
-
-      setIncomeList(result);
-    } catch (error) {
-      console.error("Error fetching income list:", error);
-    }
+    const result = await db
+      .select({
+        ...getTableColumns(Incomes),
+        totalAmount: sql`SUM(CAST(${Incomes.amount} AS NUMERIC))`.mapWith(Number),
+      })
+      .from(Incomes)
+      .groupBy(Incomes.id);
+    setIncomeList(result);
   };
 
-  /**
-   * Used to get All expenses belong to users
-   */
   const getAllExpenses = async () => {
     const result = await db
       .select({
@@ -73,40 +71,59 @@ function Dashboard() {
       })
       .from(Budgets)
       .rightJoin(Expenses, eq(Budgets.id, Expenses.budgetId))
-      .where(eq(Budgets.createdBy, user?.primaryEmailAddress.emailAddress))
+      .where(eq(Budgets.createdBy, user?.primaryEmailAddress?.emailAddress))
       .orderBy(desc(Expenses.id));
     setExpensesList(result);
   };
 
+  if (loading) {
+    return (
+      <div className="p-8">
+        <h2 className="font-bold text-3xl animate-pulse mb-4">Loading Dashboard...</h2>
+        <div className="grid gap-5">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-[180px] w-full bg-slate-200 rounded-lg animate-pulse"
+            ></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 bg-">
-      <h2 className="font-bold text-4xl">Hi, {user?.fullName} 👋</h2>
-      <p className="text-gray-500">
-        Here's what happenning with your money, Lets Manage your expense
+    <div className="p-4 md:p-8">
+      <h2 className="font-bold text-3xl md:text-4xl">Hi, {user?.fullName} 👋</h2>
+      <p className="text-gray-500 text-sm md:text-base mb-4">
+        Here's what's happening with your money. Let's manage your expenses.
       </p>
 
       <CardInfo budgetList={budgetList} incomeList={incomeList} />
-      <div className="grid grid-cols-1 lg:grid-cols-3 mt-6 gap-5">
-        <div className="lg:col-span-2">
-          <BarChartDashboard budgetList={budgetList} />
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 mt-6 gap-5">
+        <div className="lg:col-span-2 space-y-6">
+          <BarChartDashboard budgetList={budgetList} />
           <ExpenseListTable
             expensesList={expensesList}
-            refreshData={() => getBudgetList()}
+            refreshData={fetchDashboardData}
           />
         </div>
+
         <div className="grid gap-5">
           <h2 className="font-bold text-lg">Latest Budgets</h2>
-          {budgetList?.length > 0
-            ? budgetList.map((budget, index) => (
-                <BudgetItem budget={budget} key={budget.id ?? index} />
-              ))
-            : [1, 2, 3, 4].map((item, index) => (
-                <div
-                  key={index}
-                  className="h-[180px] w-full bg-slate-200 rounded-lg animate-pulse"
-                ></div>
-              ))}
+          {budgetList?.length > 0 ? (
+            budgetList.map((budget, index) => (
+              <BudgetItem budget={budget} key={budget.id ?? index} />
+            ))
+          ) : (
+            [...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[180px] w-full bg-slate-200 rounded-lg animate-pulse"
+              ></div>
+            ))
+          )}
         </div>
       </div>
     </div>
