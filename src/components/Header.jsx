@@ -10,7 +10,7 @@ import FeedbackForm from "./FeedbackForm";
 import { Menu, X } from "lucide-react";
 
 export default function Header() {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -22,10 +22,11 @@ export default function Header() {
     }
   };
 
+  if (!isLoaded) return null;
+
   return (
     <header className="p-5 border shadow-sm bg-white fixed w-full top-0 left-0 z-50">
       <div className="flex justify-between items-center">
-        {/* Logo */}
         <div className="flex flex-col md:flex-row items-center gap-2">
           <Image
             src="/chart-donut.svg"
@@ -36,7 +37,7 @@ export default function Header() {
           <span className="text-blue-800 font-bold text-xl">Finan Smart</span>
         </div>
 
-        {/* Desktop Menu */}
+        {/* Desktop Navigation */}
         <div className="hidden md:flex gap-3 items-center">
           <Button
             variant="outline"
@@ -58,30 +59,23 @@ export default function Header() {
           <FeedbackForm />
         </div>
 
-        {/* Hamburger Icon */}
-        <div className="md:hidden">
-          {mobileMenuOpen ? (
-            <X
-              size={28}
-              className="cursor-pointer transition-all"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-          ) : (
-            <Menu
-              size={28}
-              className="cursor-pointer transition-all"
-              onClick={() => setMobileMenuOpen(true)}
-            />
-          )}
+        {/* Mobile Menu Toggle */}
+        <div className="md:hidden z-50">
+          <Menu
+            size={28}
+            className="cursor-pointer transition-all"
+            onClick={() => setMobileMenuOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-0 left-0 w-full h-full bg-white/70 backdrop-blur-sm z-[60] flex flex-col items-center justify-center gap-6 animate-slide-in">
+        <div className="md:hidden fixed top-0 left-0 w-full h-full bg-white z-50 flex flex-col items-center justify-center gap-6 p-6 animate-slide-in">
+          {/* Close Icon */}
           <X
             size={28}
-            className="absolute top-4 right-4 cursor-pointer text-black"
+            className="absolute top-6 right-6 cursor-pointer z-50"
             onClick={() => setMobileMenuOpen(false)}
           />
 

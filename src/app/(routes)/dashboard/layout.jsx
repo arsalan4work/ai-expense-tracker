@@ -5,7 +5,7 @@ import SideNav from './_components/SideNav';
 import DashboardHeader from './_components/DashboardHeader';
 import { db } from '../../../../utils/dbConfig';
 import { Budgets } from '../../../../utils/schema';
-import { ClerkProvider, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { eq } from 'drizzle-orm';
 import { useRouter } from 'next/navigation';
 
@@ -37,7 +37,6 @@ function DashboardLayout({ children }) {
   }, [user, router]);
 
   return (
-    <ClerkProvider>
     <div>
       {/* Side NavBar */}
       <div className="fixed md:w-64 hidden md:block">
@@ -48,7 +47,6 @@ function DashboardLayout({ children }) {
         {children}
       </div>
     </div>
-    </ClerkProvider>
   );
 }
 
