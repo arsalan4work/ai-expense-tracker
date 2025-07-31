@@ -1,3 +1,4 @@
+'use client'
 import formatNumber from "../../../../../utils/index";
 import getFinancialAdvice from "../../../../../utils/getFinancialAdvice";
 import {
